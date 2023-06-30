@@ -1,0 +1,11 @@
+# Created by https://www.toptal.com/developers/gitignore/api/react
+# Edit at https://www.toptal.com/developers/gitignore?templates=react
+
+### flask ###
+config.py
+server.ipynb
+__pycache__/
+
+
+
+# End of https://www.toptal.com/developers/gitignore/api/react
