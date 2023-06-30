@@ -1,2 +1,1 @@
-# private-gpt
-Upload pdfs and query them with help of almighty OpenAI Models... 
+[README.md](https://github.com/sakthi535/private-gpt/files/11913008/README.md)
