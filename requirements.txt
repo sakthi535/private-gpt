@@ -1,0 +1,5 @@
+elasticsearch==8.8.0
+Flask==2.3.2
+Flask_Cors==3.0.10
+langchain==0.0.219
+PyPDF2==3.0.1

@@ -4,7 +4,6 @@
 import os
 import elasticsearch
 import json
-import ipdb
 from config import config
 
 from flask import Flask
@@ -44,12 +43,10 @@ def start_connection():
 		hosts = config['host'],
 		basic_auth = (config['auth'][0]['username'], config['auth'][0]['password'])
 	)
-	# es.add_texts()
 	os.environ["OPENAI_API_KEY"] = config["Open-AI Key"]
 	embedding = OpenAIEmbeddings()
 
 	db = ElasticVectorSearch(elasticsearch_url=f"{config['auth'][0]['username']}:{config['auth'][0]['password']}@{config['host']}", index_name="search_vector", embedding=embedding)
-	# db
 
 
 
@@ -58,13 +55,9 @@ def return_response(query, index):
 	if index not in chat_memory:
 		chat_memory[index] = []
 
-	# ipdb.set_trace()
-
 	model_qa = ChatVectorDBChain.from_llm(OpenAI(temperature=0, model_name="gpt-3.5-turbo"), db, return_source_documents=True)
 	result = model_qa({"question": query, "chat_history": chat_memory[index]})
-
 	chat_memory[index].append((query, result['answer']))
-	
 
 	response = {
 		"answer" : result['answer'],
@@ -77,7 +70,6 @@ def return_response(query, index):
 			for i in range(len(result['source_documents']))	
 		]
 	}
-	print(response)
 
 	return response
 
@@ -90,7 +82,6 @@ def upload_docs(text, index, file_name):
 
 	token_doc = RecursiveCharacterTextSplitter(chunk_size=1000).split_text(text)
 
-	# ipdb.set_trace()
 	db.index_name = index
 	db.add_texts(texts = token_doc, embedding = embedding, index_name = index, metadatas=[{"name" : file_name, "type" : index.split('_')}]*len(token_doc))
 	
@@ -111,7 +102,6 @@ def add_files():
 		for page in range(len(reader.pages)):
 			content += reader.pages[page].extract_text()
 
-		# ipdb.set_trace()
 		upload_docs(content, file_list['index'], file_list['name'])
 
 	except Exception as e:
@@ -119,18 +109,13 @@ def add_files():
 		return Response(status=404, mimetype='application/json')
 
 
-	# print(request)
-	# ipdb.set_trace()
 	return Response(status=201, mimetype='application/json')
 
 @app.route('/eraseIndex', methods = ['POST'])
 @cross_origin()
 def erase_index():
-	# print(request)
 	req = (json.loads(request.data)['name'])
 	checkIndexExists = (es.indices.exists(index = req))
-
-	# ipdb.set_trace()
 
 	if(checkIndexExists.body == True):
 		resp = es.indices.delete_alias(index = req, name = "romTalk")
