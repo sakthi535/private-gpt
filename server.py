@@ -17,6 +17,7 @@ from langchain.embeddings import OpenAIEmbeddings
 from langchain.chains import ChatVectorDBChain
 from langchain.llms import OpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter, TokenTextSplitter
+from langchain.callbacks import get_openai_callback
 
 import base64
 import io
@@ -55,22 +56,35 @@ def return_response(query, index):
 	if index not in chat_memory:
 		chat_memory[index] = []
 
-	model_qa = ChatVectorDBChain.from_llm(OpenAI(temperature=0, model_name="gpt-3.5-turbo"), db, return_source_documents=True)
-	result = model_qa({"question": query, "chat_history": chat_memory[index]})
-	chat_memory[index].append((query, result['answer']))
+	with get_openai_callback() as cb:
+		model_qa = ChatVectorDBChain.from_llm(OpenAI(temperature=0, model_name="gpt-3.5-turbo"), db, return_source_documents=True, return_generated_question = True)
+		result = model_qa({"question": query, "chat_history": chat_memory[index]})
+		chat_memory[index].append((query, result['answer']))
 
-	response = {
-		"answer" : result['answer'],
-		"source_documents" : [
-			{
-				"content" : result['source_documents'][i].page_content,
-				"metadata" : result['source_documents'][i].metadata
-			}
+		print(result['question'])
 
-			for i in range(len(result['source_documents']))	
-		]
-	}
+		print(cb)
 
+		response = {
+			"answer" : result['answer'],
+			"question" : result['question'],
+			"token" : {
+				"total_tokens" : cb.total_tokens,
+				"total_cost" : cb.total_cost,
+				"completion_tokens" : cb.completion_tokens,
+				"prompt_tokens" : cb.prompt_tokens,
+			},
+			"source_documents" : [
+				{
+					"content" : result['source_documents'][i].page_content,
+					"metadata" : result['source_documents'][i].metadata
+				}
+
+				for i in range(len(result['source_documents']))	
+			]
+		}
+
+	print({cb.total_tokens, cb.total_tokens})
 	return response
 
 def upload_docs(text, index, file_name):
